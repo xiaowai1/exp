@@ -5,7 +5,6 @@
 # @Project : exp
 # @Description : 初始数据分析
 import matplotlib
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
