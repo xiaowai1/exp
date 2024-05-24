@@ -118,8 +118,19 @@ class SCINetinitialization():
     def predict(self, setting, load=False):
         # predict
         results = []
+        data_frames = []
         if args.rollingforecast:
-            pre_data = pd.read_csv(args.root_path + args.rolling_data_path)
+            # clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
+            # files = ['../data/' + cluster + '.csv' for cluster in clusters]
+            # args.rolling_data_path = files
+            # for file in files:
+            # 读取每个文件的数据框
+            df = pd.read_csv(args.root_path + "gc19_a.csv")
+            # 计算要保留的后 20% 数据的起始索引
+            start_index = int(0.8 * len(df))
+            # 将读取的数据框的后 20% 数据追加到列表中
+            data_frames.append(df.iloc[start_index:])
+            pre_data = pd.concat(data_frames, ignore_index=True)
         else:
             pre_data = None
         for target in ['avgmem', 'avgcpu']:
@@ -162,7 +173,7 @@ class SCINetinitialization():
                             # for target_index in range(1, 3):
                             #     preds = []
                             for i in range(args.pred_len):
-                                index = 2 if target == 'avgmem' else 1 if target == 'avgcpu' else None
+                                index = 2 if target == 'avgcpu' else 1 if target == 'avgmem' else None
                                 preds.append(outputs[0][i][outputs.shape[2] - index])
                         print(outputs)
 
@@ -249,6 +260,6 @@ if __name__ == '__main__':
     SCI = SCINetinitialization(args)  # 实例化模型
     if args.train:
         print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(args.model))
-        SCI.train(setting)
+        # SCI.train(setting)
     print('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(args.model))
     SCI.predict(setting, True)

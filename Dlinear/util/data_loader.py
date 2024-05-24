@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 from torch.utils.data import Dataset
 from util.tools import StandardScaler
 from util.timefeatures import time_features
@@ -32,64 +33,69 @@ class Dataset_Custom(Dataset):
         self.scale = scale
         self.timeenc = timeenc
         self.freq = freq
-        # clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
-        # files = ['../data/' + cluster + '.csv' for cluster in clusters]
+        clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
+        files = ['../data/' + cluster + '.csv' for cluster in clusters]
         self.root_path = root_path
-        self.data_path = data_path
+        self.data_path = files
         self.__read_data__()
 
     def __read_data__(self):
         self.scaler = StandardScaler()
+        data_x_total = []
+        data_y_total = []
+        data_stamp_total = []
+        for file in self.data_path:
+            df_raw = pd.read_csv(os.path.join(self.root_path, file))
+            '''
+            df_raw.columns: ['date', ...(other features), target feature]
+            '''
+            cols = list(df_raw.columns)
+            # cols.remove(self.target)
+            cols.remove('date')
+            df_raw = df_raw[['date'] + cols]
+            # print(cols)
+            # true_train = int(len(df_raw))
+            num_train = int(len(df_raw) * 0.7)
+            num_test = int(len(df_raw) * 0.2)
+            num_vali = len(df_raw) - num_train - num_test
+            border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
+            border2s = [num_train, num_train + num_vali, len(df_raw)]
+            # border2s = [true_train, num_train + num_vali, len(df_raw)]
+            border1 = border1s[self.set_type]
+            border2 = border2s[self.set_type]
 
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
+            if self.features == 'M' or self.features == 'MS':
+                cols_data = df_raw.columns[1:]
+                df_data = df_raw[cols_data]
+            elif self.features == 'S':
+                df_data = df_raw[[self.target]]
 
-        '''
-        df_raw.columns: ['date', ...(other features), target feature]
-        '''
-        cols = list(df_raw.columns)
-        # cols.remove(self.target)
-        cols.remove('date')
-        df_raw = df_raw[['date'] + cols]
-        # print(cols)
-        true_train = int(len(df_raw))
-        num_train = int(len(df_raw) * 0.7)
-        num_test = int(len(df_raw) * 0.2)
-        num_vali = len(df_raw) - num_train - num_test
-        border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
-        border2s = [num_train, num_train + num_vali, len(df_raw)]
-        # border2s = [true_train, num_train + num_vali, len(df_raw)]
-        border1 = border1s[self.set_type]
-        border2 = border2s[self.set_type]
+            if self.scale:
+                train_data = df_data[border1s[0]:border2s[0]]
+                self.scaler.fit(train_data.values)
+                data = self.scaler.transform(df_data.values)
+            else:
+                data = df_data.values
 
-        if self.features == 'M' or self.features == 'MS':
-            cols_data = df_raw.columns[1:]
-            df_data = df_raw[cols_data]
-        elif self.features == 'S':
-            df_data = df_raw[[self.target]]
+            df_stamp = df_raw[['date']][border1:border2]
+            df_stamp['date'] = pd.to_datetime(df_stamp.date, unit='us')
+            if self.timeenc == 0:
+                df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
+                df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
+                df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
+                df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
+                data_stamp = df_stamp.drop(['date'], 1).values
+            elif self.timeenc == 1:
+                data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
+                data_stamp = data_stamp.transpose(1, 0)
 
-        if self.scale:
-            train_data = df_data[border1s[0]:border2s[0]]
-            self.scaler.fit(train_data.values)
-            data = self.scaler.transform(df_data.values)
-        else:
-            data = df_data.values
+            data_x_total.extend(data[border1:border2])
+            data_y_total.extend(data[border1:border2])
+            data_stamp_total.extend(data_stamp)
 
-        df_stamp = df_raw[['date']][border1:border2]
-        df_stamp['date'] = pd.to_datetime(df_stamp.date, unit='us')
-        if self.timeenc == 0:
-            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
-            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
-            df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
-            df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            data_stamp = df_stamp.drop(['date'], 1).values
-        elif self.timeenc == 1:
-            data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
-            data_stamp = data_stamp.transpose(1, 0)
-
-        self.data_x = data[border1:border2]
-        self.data_y = data[border1:border2]
-        self.data_stamp = data_stamp
+        self.data_x = np.array(data_x_total)
+        self.data_y = np.array(data_y_total)
+        self.data_stamp = np.array(data_stamp_total)
 
     def __getitem__(self, index):
         s_begin = index
@@ -135,71 +141,73 @@ class Dataset_Pred(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.cols = cols
+        clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
+        files = ['../data/' + cluster + '.csv' for cluster in clusters]
         self.root_path = root_path
-        self.data_path = data_path
+        self.data_path = files
         self.pre_data = pre_data
         self.__read_data__()
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
-        print(type(df_raw))
-        print(type(self.pre_data))
-        # 因为进行预测的时候代码会自动帮我们取最后的数据我们只需做好拼接即可
-        if self.pre_data is not None and not self.pre_data.empty:
-            df_raw = pd.concat([df_raw, self.pre_data], ignore_index=True)
-        '''
-        df_raw.columns: ['date', ...(other features), target feature]
-        '''
-        if self.cols:
-            cols = self.cols.copy()
-            cols.remove(self.target)
-        else:
-            cols = list(df_raw.columns)
-            cols.remove(self.target)
-            cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
-        border1 = len(df_raw) - self.seq_len
-        border2 = len(df_raw)
+        for file in self.data_path:
+            df_raw = pd.read_csv(os.path.join(self.root_path, file))
+            print(type(df_raw))
+            print(type(self.pre_data))
+            # 因为进行预测的时候代码会自动帮我们取最后的数据我们只需做好拼接即可
+            if self.pre_data is not None and not self.pre_data.empty:
+                df_raw = pd.concat([df_raw, self.pre_data], ignore_index=True)
+            '''
+            df_raw.columns: ['date', ...(other features), target feature]
+            '''
+            if self.cols:
+                cols = self.cols.copy()
+                cols.remove(self.target)
+            else:
+                cols = list(df_raw.columns)
+                cols.remove(self.target)
+                cols.remove('date')
+            df_raw = df_raw[['date'] + cols + [self.target]]
+            border1 = len(df_raw) - self.seq_len
+            border2 = len(df_raw)
 
-        if self.features == 'M' or self.features == 'MS':
-            cols_data = df_raw.columns[1:]
-            df_data = df_raw[cols_data]
-        elif self.features == 'S':
-            df_data = df_raw[[self.target]]
+            if self.features == 'M' or self.features == 'MS':
+                cols_data = df_raw.columns[1:]
+                df_data = df_raw[cols_data]
+            elif self.features == 'S':
+                df_data = df_raw[[self.target]]
 
-        if self.scale:
-            self.scaler.fit(df_data.values)
-            data = self.scaler.transform(df_data.values)
+            if self.scale:
+                self.scaler.fit(df_data.values)
+                data = self.scaler.transform(df_data.values)
 
-        else:
-            data = df_data.values
+            else:
+                data = df_data.values
 
-        tmp_stamp = df_raw[['date']][border1:border2]
-        tmp_stamp['date'] = pd.to_datetime(tmp_stamp.date, format='mixed')
-        pred_dates = pd.date_range(tmp_stamp.date.values[-1], periods=self.pred_len + 1, freq=self.freq)
+            tmp_stamp = df_raw[['date']][border1:border2]
+            tmp_stamp['date'] = pd.to_datetime(tmp_stamp.date, format='mixed')
+            pred_dates = pd.date_range(tmp_stamp.date.values[-1], periods=self.pred_len + 1, freq=self.freq)
 
-        df_stamp = pd.DataFrame(columns=['date'])
-        df_stamp.date = list(tmp_stamp.date.values) + list(pred_dates[1:])
-        if self.timeenc == 0:
-            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
-            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
-            df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
-            df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            df_stamp['minute'] = df_stamp.date.apply(lambda row: row.minute, 1)
-            df_stamp['minute'] = df_stamp.minute.map(lambda x: x // 15)
-            data_stamp = df_stamp.drop(['date'], 1).values
-        elif self.timeenc == 1:
-            data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
-            data_stamp = data_stamp.transpose(1, 0)
+            df_stamp = pd.DataFrame(columns=['date'])
+            df_stamp.date = list(tmp_stamp.date.values) + list(pred_dates[1:])
+            if self.timeenc == 0:
+                df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
+                df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
+                df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
+                df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
+                df_stamp['minute'] = df_stamp.date.apply(lambda row: row.minute, 1)
+                df_stamp['minute'] = df_stamp.minute.map(lambda x: x // 15)
+                data_stamp = df_stamp.drop(['date'], 1).values
+            elif self.timeenc == 1:
+                data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
+                data_stamp = data_stamp.transpose(1, 0)
 
-        self.data_x = data[border1:border2]
-        if self.inverse:
-            self.data_y = df_data.values[border1:border2]
-        else:
-            self.data_y = data[border1:border2]
-        self.data_stamp = data_stamp
+            self.data_x = data[border1:border2]
+            if self.inverse:
+                self.data_y = df_data.values[border1:border2]
+            else:
+                self.data_y = data[border1:border2]
+            self.data_stamp = data_stamp
 
     def __getitem__(self, index):
         s_begin = index
