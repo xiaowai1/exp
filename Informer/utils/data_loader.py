@@ -6,8 +6,8 @@
 import os
 import numpy as np
 import pandas as pd
-from utils.tools import StandardScaler
-from utils.timefeatures import time_features
+from tools import StandardScaler
+from timefeatures import time_features
 from torch.utils.data import Dataset
 
 
