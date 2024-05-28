@@ -1,5 +1,13 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from neuralforecast import NeuralForecast
+from neuralforecast.models import MLP, Informer
+from neuralforecast.losses.pytorch import MAE
+from neuralforecast.losses.pytorch import MQLoss, DistributionLoss
 from layers.Invertible import RevIN
 
 
@@ -94,15 +102,32 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.encoder = SCITree(level=1, enc_in=configs.enc_in, kernel_size=3, dilation=1, dropout=0.5,
                                d_model=configs.d_model)
-        self.projection = nn.Conv1d(configs.seq_len, configs.pred_len, kernel_size=1, stride=1, bias=False)
+        # 修改 projection 层的输入大小，使其与 LSTM 输出的维度匹配
+        self.projection = nn.Conv1d(configs.d_model, configs.pred_len, kernel_size=1, stride=1, bias=False)
         self.rev = RevIN(configs.enc_in) if configs.rev else None
+        # 添加 LSTM 层
+        self.lstm = nn.LSTM(input_size=configs.enc_in,  # 使用 SCINet 的输入大小作为 LSTM 的输入大小
+                            hidden_size=configs.d_model,
+                            num_layers=1,
+                            batch_first=True,
+                            dropout=configs.dropout,
+                            bidirectional=False)
+        self.fc = nn.Linear(configs.seq_len, configs.pred_len)
 
     def forward(self, x):
-        x = self.rev(x, 'norm') if self.rev else x
-        res = x
-        x = self.encoder(x)
-        x += res
-        x = self.projection(x)
+        x = self.rev(x, 'norm') if self.rev else x  # 16, 96, 2
+        res = x     # 16, 96, 2
+        x = self.encoder(x)     # 16, 96, 2
+        x += res    # 16, 96, 2
+
+        # 将输入传递给 LSTM
+        x, _ = self.lstm(x)     # x:16, 96, 2   _: 1, 16, 512
+
+        # 使用 LSTM 的输出进行预测
+        x = self.projection(x.transpose(1, 2))  # 16, 12, 96
+        x = F.relu(x)   # 16, 12, 96
+        x = self.fc(x.squeeze(2))
+
         x = self.rev(x, 'denorm') if self.rev else x
 
         return x
