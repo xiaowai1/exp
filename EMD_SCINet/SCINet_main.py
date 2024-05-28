@@ -1,6 +1,3 @@
-"""
-erditor: Snu77
-"""
 import argparse
 import os
 import time
@@ -13,7 +10,6 @@ from util.data_factory import data_provider
 from util.tools import adjust_learning_rate
 # params
 from layers import SCINet
-from layers import MyModel
 import matplotlib.pyplot as plt
 
 
@@ -25,8 +21,7 @@ class SCINetinitialization():
         self.model, self.device = self.build_model(args)
 
     def build_model(self, args):
-        # model = SCINet.Model(self.args).float()
-        model = MyModel.HybridModel(self.args).float()
+        model = SCINet.Model(self.args).float()
         # 将模型定义在GPU上
 
         if args.use_gpu:
@@ -77,9 +72,7 @@ class SCINetinitialization():
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
 
-                # outputs = self.model(batch_x)
-                outputs_tuple = self.model(batch_x)
-                outputs, additional_info = outputs_tuple
+                outputs = self.model(batch_x)
 
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
@@ -161,7 +154,8 @@ class SCINetinitialization():
 
                         dec_inp = torch.zeros([batch_y.shape[0], self.args.pred_len, batch_y.shape[2]]).float().to(
                             batch_y.device)
-                        dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+                        dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(
+                            self.device)
 
                         outputs = self.model(batch_x)
                         outputs = data_set.inverse_transform(outputs)
@@ -210,7 +204,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', type=str, default='gc19_a.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
-    parser.add_argument('--target', type=str, default='avgcpu', help='target feature in S or MS task')
+    parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
     parser.add_argument('--freq', type=str, default='5t',
                         help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
     parser.add_argument('--checkpoints', type=str, default='./models/', help='location of model models')

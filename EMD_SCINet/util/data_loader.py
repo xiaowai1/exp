@@ -1,12 +1,14 @@
 import os
 import pandas as pd
 import numpy as np
+from PyEMD import CEEMDAN
 from torch.utils.data import Dataset
 from util.tools import StandardScaler
 from util.timefeatures import time_features
 import warnings
 
 warnings.filterwarnings('ignore')
+
 
 class Dataset_Custom(Dataset):
     def __init__(self, root_path, flag='train', size=None,
@@ -60,6 +62,7 @@ class Dataset_Custom(Dataset):
             num_test = int(len(df_raw) * 0.2)
             num_vali = len(df_raw) - num_train - num_test
             border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
+            # border2s = [true_train, num_train + num_vali, len(df_raw)]
             border2s = [num_train, num_train + num_vali, len(df_raw)]
             border1 = border1s[self.set_type]
             border2 = border2s[self.set_type]
@@ -89,9 +92,15 @@ class Dataset_Custom(Dataset):
                 data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
                 data_stamp = data_stamp.transpose(1, 0)
 
-            data_x_total.extend(data[border1:border2])
-            data_y_total.extend(data[border1:border2])
+            data_decompose = self.decompose(data[border1:border2])
+
+            data_x_total.extend(data_decompose)
+            data_y_total.extend(data_decompose)
             data_stamp_total.extend(data_stamp)
+
+            # data_x_total.extend(data[border1:border2])
+            # data_y_total.extend(data[border1:border2])
+            # data_stamp_total.extend(data_stamp)
 
         self.data_x = np.array(data_x_total)
         self.data_y = np.array(data_y_total)
@@ -115,6 +124,22 @@ class Dataset_Custom(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
+
+    def decompose(self, df_rw):
+        reconstructed_data = []
+        for i in range(2):
+            data_to_process = df_rw[:, i]
+
+            # 进行 CEEMDAN 分解
+            ceemdan = CEEMDAN()
+            IMF = ceemdan(data_to_process)
+            # 重组 IMF
+            combined_sequence = np.sum(IMF, axis=0)
+            # 将重组后的序列添加到重组数据列表中
+            reconstructed_data.append(combined_sequence)
+        # 将重组数据列表转换为二维数组，每列代表一个重组后的特征
+        reconstructed_array = np.stack(reconstructed_data, axis=1)
+        return reconstructed_array
 
 
 class Dataset_Pred(Dataset):
