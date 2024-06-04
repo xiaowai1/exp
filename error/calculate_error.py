@@ -8,13 +8,18 @@ import pandas as pd
 import numpy as np
 
 # 从 CSV 文件中加载数据
-df = pd.read_csv('../Dlinear/results/avgmem-ForecastResults.csv')  # 替换为你的 CSV 文件路径
-# df = pd.read_csv('../Dlinear/results/avgcpu-ForecastResults.csv')  # 替换为你的 CSV 文件路径
+df = pd.read_csv('../SCINet/results/avgmem-ForecastResults.csv')  # 替换为你的 CSV 文件路径
+# df = pd.read_csv('../SCINet/results/avgcpu-ForecastResults.csv')  # 替换为你的 CSV 文件路径
 
 # 提取实际值和预测值列，并转换为 NumPy 数组
 y_true = df['Avgmemreal'].values
 # y_true = df['Avgcpureal'].values
 y_pred = df['forecast'].values
+
+# 删除含有 NaN 或 Inf 值的行
+valid_idx = ~np.isnan(y_true) & ~np.isnan(y_pred) & ~np.isinf(y_true) & ~np.isinf(y_pred)
+y_true = y_true[valid_idx]
+y_pred = y_pred[valid_idx]
 
 # 计算均方误差 (MSE)
 mse = np.mean((y_true - y_pred)**2)

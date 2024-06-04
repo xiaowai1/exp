@@ -92,15 +92,15 @@ class Dataset_Custom(Dataset):
                 data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
                 data_stamp = data_stamp.transpose(1, 0)
 
-            data_decompose = self.decompose(data[border1:border2])
-
-            data_x_total.extend(data_decompose)
-            data_y_total.extend(data_decompose)
-            data_stamp_total.extend(data_stamp)
-
-            # data_x_total.extend(data[border1:border2])
-            # data_y_total.extend(data[border1:border2])
+            # data_decompose = self.decompose(data[border1:border2])
+            #
+            # data_x_total.extend(data_decompose)
+            # data_y_total.extend(data_decompose)
             # data_stamp_total.extend(data_stamp)
+
+            data_x_total.extend(data[border1:border2])
+            data_y_total.extend(data[border1:border2])
+            data_stamp_total.extend(data_stamp)
 
         self.data_x = np.array(data_x_total)
         self.data_y = np.array(data_y_total)

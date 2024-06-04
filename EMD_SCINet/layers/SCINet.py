@@ -92,17 +92,47 @@ class SCITree(nn.Module):
 class Model(nn.Module):
     def __init__(self, configs):
         super(Model, self).__init__()
+        self.encoder_ffn = nn.Sequential(
+            nn.Linear(configs.seq_len * configs.enc_in, configs.d_model),
+            nn.ReLU(inplace=True),
+            nn.Dropout(configs.dropout)
+        )
         self.encoder = SCITree(level=1, enc_in=configs.enc_in, kernel_size=3, dilation=1, dropout=0.5,
                                d_model=configs.d_model)
+        '''
+        input_size: 输入特征的维度，即每个时间步输入张量的大小。
+        hidden_size: 隐藏层的特征数量。它定义了LSTM单元输出的特征的维度。
+        num_layers: LSTM堆叠的层数。多层LSTM可以增加模型的复杂度和能力。
+        bias: 如果为True，则在LSTM单元中添加偏置。
+        batch_first: 如果设置为True，则输入和输出张量的批处理维度(batch_size)将是第一维（形状为[batch_size, seq_len, feature]），否则第二维（默认情况下是[seq_len, batch_size, feature]）。
+        dropout: 如果大于0，则在除最后一层外的每层后添加一个Dropout层。Dropout可以防止网络过拟合。
+        bidirectional: 如果为True，则成为双向LSTM。双向LSTM可以从两个方向处理序列数据，通常能够提高模型性能。
+        '''
+        # self.lstm = nn.LSTM(input_size=configs.enc_in, hidden_size=configs.enc_in, num_layers=1,
+        #                     dropout=configs.dropout, bidirectional=True, batch_first=True)
+        # self.decoder = nn.Linear(configs.d_model * 2 * configs.seq_len, configs.pred_len)
+
+        self.decoder_ffn = nn.Sequential(
+            nn.Linear(configs.seq_len * configs.enc_in, configs.d_model),  # FFN层输入大小
+            nn.ReLU(inplace=True),
+            nn.Dropout(configs.dropout)
+        )
+        self.lstm = nn.LSTM(input_size=configs.d_model, hidden_size=configs.enc_in, num_layers=2,
+                            dropout=configs.dropout, bidirectional=True, batch_first=True)
+
         self.projection = nn.Conv1d(configs.seq_len, configs.pred_len, kernel_size=1, stride=1, bias=False)
         self.rev = RevIN(configs.enc_in) if configs.rev else None
 
     def forward(self, x):
         x = self.rev(x, 'norm') if self.rev else x
         res = x
+        x = self.encoder_ffn(x.contiguous().view(x.size(0), -1))
+        x = x.view(x.size(0), -1, 2)
         x = self.encoder(x)
         x += res
-        x = self.projection(x)
+        x = self.decoder_ffn(x.contiguous().view(x.size(0), -1))  # FFN层
+        x = x.view(x.size(0), -1, 512)
+        x, (h_n, c_n) = self.lstm(x)
+        x = self.projection(x)  # 投影到输出大小
         x = self.rev(x, 'denorm') if self.rev else x
-
         return x

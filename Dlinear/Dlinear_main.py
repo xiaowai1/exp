@@ -48,7 +48,7 @@ class SCINetinitialization():
         return data_set, data_loader
 
     def train(self, setting):
-        for target in ['avgmem', 'avgcpu']:
+        for target in ['avgcpu', 'avgmem']:
             self.args.target = target
             train_data, train_loader = self._get_data(flag='train')
 
@@ -242,9 +242,9 @@ if __name__ == '__main__':
 
     # optimization
     parser.add_argument('--num_workers', type=int, default=0, help='data loader num workers')
-    parser.add_argument('--train_epochs', type=int, default=50, help='train epochs')
+    parser.add_argument('--train_epochs', type=int, default=30, help='train epochs')
     parser.add_argument('--batch_size', type=int, default=16, help='batch size of train input data')
-    parser.add_argument('--learning_rate', type=float, default=0.001, help='optimizer learning rate')
+    parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
     parser.add_argument('--loss', type=str, default='mse', help='loss function')
     parser.add_argument('--lradj', type=str, default='type1', help='adjust learning rate')
 
@@ -260,6 +260,6 @@ if __name__ == '__main__':
     SCI = SCINetinitialization(args)  # 实例化模型
     if args.train:
         print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(args.model))
-        # SCI.train(setting)
+        SCI.train(setting)
     print('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(args.model))
     SCI.predict(setting, True)
