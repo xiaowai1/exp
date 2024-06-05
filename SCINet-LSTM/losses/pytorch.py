@@ -320,7 +320,7 @@ class MASE(BasePointLoss):
     `y` and `y_hat`. MASE measures the relative prediction
     accuracy of a forecasting method by comparinng the mean absolute errors
     of the prediction and the observed value against the mean
-    absolute errors of the seasonal naive model.
+    absolute errors of the seasonal naive models.
     The MASE partially composed the Overall Weighted Average (OWA),
     used in the M4 Competition.
 
@@ -783,7 +783,7 @@ def bernoulli_domain_map(input: torch.Tensor):
 def bernoulli_scale_decouple(output, loc=None, scale=None):
     """Bernoulli Scale Decouple
 
-    Stabilizes model's output optimization, by learning residual
+    Stabilizes models's output optimization, by learning residual
     variance and residual location based on anchoring `loc`, `scale`.
     Also adds Bernoulli domain protection to the distribution parameters.
     """
@@ -813,7 +813,7 @@ def student_domain_map(input: torch.Tensor):
 def student_scale_decouple(output, loc=None, scale=None, eps: float = 0.1):
     """Normal Scale Decouple
 
-    Stabilizes model's output optimization, by learning residual
+    Stabilizes models's output optimization, by learning residual
     variance and residual location based on anchoring `loc`, `scale`.
     Also adds StudentT domain protection to the distribution parameters.
     """
@@ -845,7 +845,7 @@ def normal_domain_map(input: torch.Tensor):
 def normal_scale_decouple(output, loc=None, scale=None, eps: float = 0.2):
     """Normal Scale Decouple
 
-    Stabilizes model's output optimization, by learning residual
+    Stabilizes models's output optimization, by learning residual
     variance and residual location based on anchoring `loc`, `scale`.
     Also adds Normal domain protection to the distribution parameters.
     """
@@ -874,7 +874,7 @@ def poisson_domain_map(input: torch.Tensor):
 def poisson_scale_decouple(output, loc=None, scale=None):
     """Poisson Scale Decouple
 
-    Stabilizes model's output optimization, by learning residual
+    Stabilizes models's output optimization, by learning residual
     variance and residual location based on anchoring `loc`, `scale`.
     Also adds Poisson domain protection to the distribution parameters.
     """
@@ -904,7 +904,7 @@ def nbinomial_domain_map(input: torch.Tensor):
 def nbinomial_scale_decouple(output, loc=None, scale=None):
     """Negative Binomial Scale Decouple
 
-    Stabilizes model's output optimization, by learning total
+    Stabilizes models's output optimization, by learning total
     count and logits based on anchoring `loc`, `scale`.
     Also adds Negative Binomial domain protection to the distribution parameters.
     """
@@ -940,7 +940,7 @@ class Tweedie(Distribution):
 
     The Tweedie distribution is a compound probability, special case of exponential
     dispersion models EDMs defined by its mean-variance relationship.
-    The distribution particularly useful to model sparse series as the probability has
+    The distribution particularly useful to models sparse series as the probability has
     possitive mass at zero but otherwise is continuous.
 
     $Y \sim \mathrm{ED}(\\mu,\\sigma^{2}) \qquad
@@ -1034,7 +1034,7 @@ def tweedie_domain_map(input: torch.Tensor):
 def tweedie_scale_decouple(output, loc=None, scale=None):
     """Tweedie Scale Decouple
 
-    Stabilizes model's output optimization, by learning total
+    Stabilizes models's output optimization, by learning total
     count and logits based on anchoring `loc`, `scale`.
     Also adds Tweedie domain protection to the distribution parameters.
     """
@@ -1251,7 +1251,7 @@ class DistributionLoss(torch.nn.Module):
 class PMM(torch.nn.Module):
     """Poisson Mixture Mesh
 
-    This Poisson Mixture statistical model assumes independence across groups of
+    This Poisson Mixture statistical models assumes independence across groups of
     data $\mathcal{G}=\{[g_{i}]\}$, and estimates relationships within the group.
 
     $$ \mathrm{P}\\left(\mathbf{y}_{[b][t+1:t+H]}\\right) =
@@ -1264,8 +1264,8 @@ class PMM(torch.nn.Module):
     `level`: float list [0,100], confidence levels for prediction intervals.<br>
     `quantiles`: float list [0,1], alternative to level list, target quantiles.<br>
     `return_params`: bool=False, wether or not return the Distribution parameters.<br>
-    `batch_correlation`: bool=False, wether or not model batch correlations.<br>
-    `horizon_correlation`: bool=False, wether or not model horizon correlations.<br>
+    `batch_correlation`: bool=False, wether or not models batch correlations.<br>
+    `horizon_correlation`: bool=False, wether or not models horizon correlations.<br>
 
     **References:**<br>
     [Kin G. Olivares, O. Nganba Meetei, Ruijun Ma, Rohan Reddy, Mengfei Cao, Lee Dicker.
@@ -1320,7 +1320,7 @@ class PMM(torch.nn.Module):
     ):
         """Scale Decouple
 
-        Stabilizes model's output optimization, by learning residual
+        Stabilizes models's output optimization, by learning residual
         variance and residual location based on anchoring `loc`, `scale`.
         Also adds domain protection to the distribution parameters.
         """
@@ -1451,7 +1451,7 @@ class PMM(torch.nn.Module):
 class GMM(torch.nn.Module):
     """Gaussian Mixture Mesh
 
-    This Gaussian Mixture statistical model assumes independence across groups of
+    This Gaussian Mixture statistical models assumes independence across groups of
     data $\mathcal{G}=\{[g_{i}]\}$, and estimates relationships within the group.
 
     $$ \mathrm{P}\\left(\mathbf{y}_{[b][t+1:t+H]}\\right) =
@@ -1465,8 +1465,8 @@ class GMM(torch.nn.Module):
     `level`: float list [0,100], confidence levels for prediction intervals.<br>
     `quantiles`: float list [0,1], alternative to level list, target quantiles.<br>
     `return_params`: bool=False, wether or not return the Distribution parameters.<br>
-    `batch_correlation`: bool=False, wether or not model batch correlations.<br>
-    `horizon_correlation`: bool=False, wether or not model horizon correlations.<br><br>
+    `batch_correlation`: bool=False, wether or not models batch correlations.<br>
+    `horizon_correlation`: bool=False, wether or not models horizon correlations.<br><br>
 
     **References:**<br>
     [Kin G. Olivares, O. Nganba Meetei, Ruijun Ma, Rohan Reddy, Mengfei Cao, Lee Dicker.
@@ -1525,7 +1525,7 @@ class GMM(torch.nn.Module):
     ):
         """Scale Decouple
 
-        Stabilizes model's output optimization, by learning residual
+        Stabilizes models's output optimization, by learning residual
         variance and residual location based on anchoring `loc`, `scale`.
         Also adds domain protection to the distribution parameters.
         """
@@ -1658,7 +1658,7 @@ class GMM(torch.nn.Module):
 class NBMM(torch.nn.Module):
     """Negative Binomial Mixture Mesh
 
-    This N. Binomial Mixture statistical model assumes independence across groups of
+    This N. Binomial Mixture statistical models assumes independence across groups of
     data $\mathcal{G}=\{[g_{i}]\}$, and estimates relationships within the group.
 
     $$ \mathrm{P}\\left(\mathbf{y}_{[b][t+1:t+H]}\\right) =
@@ -1728,7 +1728,7 @@ class NBMM(torch.nn.Module):
     ):
         """Scale Decouple
 
-        Stabilizes model's output optimization, by learning residual
+        Stabilizes models's output optimization, by learning residual
         variance and residual location based on anchoring `loc`, `scale`.
         Also adds domain protection to the distribution parameters.
         """

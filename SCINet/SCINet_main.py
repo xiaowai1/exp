@@ -101,7 +101,7 @@ class SCINetinitialization():
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
         path = os.path.join(self.args.checkpoints, setting)
-        best_model_path = path + '/' + 'model.pth'
+        best_model_path = path + '/' + 'models.pth'
         torch.save(self.model.state_dict(), best_model_path)
 
         return self.model
@@ -117,7 +117,7 @@ class SCINetinitialization():
 
         # 加载模型
         path = os.path.join(self.args.checkpoints, setting)
-        best_model_path = path + '/' + 'model.pth'
+        best_model_path = path + '/' + 'models.pth'
         self.model.load_state_dict(torch.load(best_model_path))
 
         # 评估模式
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument('--train', type=bool, default=True, help='Whether to conduct training')
     parser.add_argument('--rollingforecast', type=bool, default=True, help='rolling forecast True or False')
     parser.add_argument('--rolling_data_path', type=str, default='ETTh1-Test.csv', help='rolling data file')
-    parser.add_argument('--model', type=str, default='SCINet', help='Model name')
+    parser.add_argument('--models', type=str, default='SCINet', help='Model name')
 
     # data loader
     parser.add_argument('--root_path', type=str, default='../data/', help='root path of the data file')
@@ -209,19 +209,19 @@ if __name__ == '__main__':
     parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
     parser.add_argument('--freq', type=str, default='5t',
                         help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
-    parser.add_argument('--checkpoints', type=str, default='./models/', help='location of model models')
+    parser.add_argument('--checkpoints', type=str, default='./models/', help='location of models models')
 
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
     parser.add_argument('--pred_len', type=int, default=12, help='prediction sequence length')
 
-    # model
+    # models
     parser.add_argument('--rev', action='store_true', default=False, help='whether to apply RevIN')
     parser.add_argument('--enc_in', type=int, default=2, help='encoder input size')
     parser.add_argument('--dec_in', type=int, default=2, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=1, help='output size')
-    parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
+    parser.add_argument('--d_model', type=int, default=512, help='dimension of models')
 
     parser.add_argument('--dropout', type=float, default=0.05, help='dropout')
     parser.add_argument('--embed', type=str, default='timeF',

@@ -92,10 +92,10 @@ class BaseMultivariate(BaseModel):
             losses.NBMM,
         )
         if isinstance(self.loss, unsupported_losses):
-            raise Exception(f"{self.loss} is not supported in a Multivariate model.")
+            raise Exception(f"{self.loss} is not supported in a Multivariate models.")
         if isinstance(self.valid_loss, unsupported_losses):
             raise Exception(
-                f"{self.valid_loss} is not supported in a Multivariate model."
+                f"{self.valid_loss} is not supported in a Multivariate models."
             )
 
         self.batch_size = batch_size
@@ -526,7 +526,7 @@ class BaseMultivariate(BaseModel):
         The method is designed to be compatible with SKLearn-like classes
         and in particular to be compatible with the StatsForecast library.
 
-        By default the `model` is not saving training checkpoints to protect
+        By default the `models` is not saving training checkpoints to protect
         disk memory, to get them change `enable_checkpointing=True` in `__init__`.
 
         **Parameters:**<br>

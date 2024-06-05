@@ -50,7 +50,7 @@ class BaseAuto(pl.LightningModule):
 
     Parameters
     ----------
-    cls_model : PyTorch/PyTorchLightning model
+    cls_model : PyTorch/PyTorchLightning models
         See `neuralforecast.models` [collection here](https://nixtla.github.io/neuralforecast/models.html).
     h : int
         Forecast horizon
@@ -70,11 +70,11 @@ class BaseAuto(pl.LightningModule):
     gpus : int (default=torch.cuda.device_count())
         Number of gpus to use during optimization, default all available. Only used with ray tune.
     refit_with_val : bool
-        Refit of best model should preserve val_size.
+        Refit of best models should preserve val_size.
     verbose : bool
         Track progress.
     alias : str, optional (default=None)
-        Custom name of the model.
+        Custom name of the models.
     backend : str (default='ray')
         Backend to use for searching the hyperparameter space, can be either 'ray' or 'optuna'.
     callbacks : list of callable, optional (default=None)
@@ -131,7 +131,7 @@ class BaseAuto(pl.LightningModule):
                 "Please use `valid_loss` init argument instead of `config['valid_loss']`."
             )
         # This attribute helps to protect
-        # model and datasets interactions protections
+        # models and datasets interactions protections
         if "early_stop_patience_steps" in config_base.keys():
             self.early_stop_patience_steps = 1
         else:
@@ -181,14 +181,14 @@ class BaseAuto(pl.LightningModule):
     def _train_tune(self, config_step, cls_model, dataset, val_size, test_size):
         """BaseAuto._train_tune
 
-        Internal function that instantiates a NF class model, then automatically
+        Internal function that instantiates a NF class models, then automatically
         explores the validation loss (ptl/val_loss) on which the hyperparameter
         exploration is based.
 
         **Parameters:**<br>
-        `config_step`: Dict, initialization parameters of a NF model.<br>
-        `cls_model`: NeuralForecast model class, yet to be instantiated.<br>
-        `dataset`: NeuralForecast dataset, to fit the model.<br>
+        `config_step`: Dict, initialization parameters of a NF models.<br>
+        `cls_model`: NeuralForecast models class, yet to be instantiated.<br>
+        `dataset`: NeuralForecast dataset, to fit the models.<br>
         `val_size`: int, validation size for temporal cross-validation.<br>
         `test_size`: int, test size for temporal cross-validation.<br>
         """
@@ -440,7 +440,7 @@ class BaseAuto(pl.LightningModule):
     def predict(self, dataset, step_size=1, **data_kwargs):
         """BaseAuto.predict
 
-        Predictions of the best performing model on validation.
+        Predictions of the best performing models on validation.
 
         **Parameters:**<br>
         `dataset`: NeuralForecast's `TimeSeriesDataset` see details [here](https://nixtla.github.io/neuralforecast/tsdataset.html)<br>
@@ -448,7 +448,7 @@ class BaseAuto(pl.LightningModule):
         `**data_kwarg`: additional parameters for the dataset module.<br>
         `random_seed`: int=None, random_seed for hyperparameter exploration algorithms (not implemented).<br>
         **Returns:**<br>
-        `y_hat`: numpy predictions of the `NeuralForecast` model.<br>
+        `y_hat`: numpy predictions of the `NeuralForecast` models.<br>
         """
         return self.model.predict(dataset=dataset, step_size=step_size, **data_kwargs)
 
@@ -461,9 +461,9 @@ class BaseAuto(pl.LightningModule):
     def save(self, path):
         """BaseAuto.save
 
-        Save the fitted model to disk.
+        Save the fitted models to disk.
 
         **Parameters:**<br>
-        `path`: str, path to save the model.<br>
+        `path`: str, path to save the models.<br>
         """
         self.model.save(path)

@@ -38,7 +38,7 @@ def _disable_torch_init():
     """Context manager used to disable pytorch's weight initialization.
 
     This is especially useful when loading saved models, since when initializing
-    a model the weights are also initialized following some method
+    a models the weights are also initialized following some method
     (e.g. kaiming uniform), and that time is wasted since we'll override them with
     the saved weights."""
 
@@ -132,7 +132,7 @@ class BaseModel(pl.LightningModule):
         self.hist_exog_size = len(self.hist_exog_list)
         self.stat_exog_size = len(self.stat_exog_list)
 
-        # Check if model supports exogenous, otherwise raise Exception
+        # Check if models supports exogenous, otherwise raise Exception
         if not self.EXOGENOUS_FUTR and self.futr_exog_size > 0:
             raise Exception(
                 f"{type(self).__name__} does not support future exogenous variables."
@@ -180,7 +180,7 @@ class BaseModel(pl.LightningModule):
             if torch.cuda.is_available():
                 trainer_kwargs["devices"] = -1
 
-        # Avoid saturating local memory, disabled fit model checkpoints
+        # Avoid saturating local memory, disabled fit models checkpoints
         if trainer_kwargs.get("enable_checkpointing", None) is None:
             trainer_kwargs["enable_checkpointing"] = False
 
@@ -363,7 +363,7 @@ class BaseModel(pl.LightningModule):
             if "lr" in optimizer_signature.parameters:
                 if "lr" in optimizer_kwargs:
                     warnings.warn(
-                        "ignoring learning rate passed in optimizer_kwargs, using the model's learning rate"
+                        "ignoring learning rate passed in optimizer_kwargs, using the models's learning rate"
                     )
                 optimizer_kwargs["lr"] = self.learning_rate
             optimizer = self.optimizer(params=self.parameters(), **optimizer_kwargs)
@@ -381,7 +381,7 @@ class BaseModel(pl.LightningModule):
             if "optimizer" in lr_scheduler_signature.parameters:
                 if "optimizer" in lr_scheduler_kwargs:
                     warnings.warn(
-                        "ignoring optimizer passed in lr_scheduler_kwargs, using the model's optimizer"
+                        "ignoring optimizer passed in lr_scheduler_kwargs, using the models's optimizer"
                     )
                     del lr_scheduler_kwargs["optimizer"]
             lr_scheduler["scheduler"] = self.lr_scheduler(

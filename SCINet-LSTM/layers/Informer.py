@@ -175,13 +175,13 @@ class ProbAttention(nn.Module):
 class Informer(BaseWindows):
     """Informer
 
-        The Informer model tackles the vanilla Transformer computational complexity challenges for long-horizon forecasting.
+        The Informer models tackles the vanilla Transformer computational complexity challenges for long-horizon forecasting.
         The architecture has three distinctive features:
         1) A ProbSparse self-attention mechanism with an O time and memory complexity Llog(L).
         2) A self-attention distilling process that prioritizes attention and efficiently handles long input sequences.
         3) An MLP multi-step decoder that predicts long time-series sequences in a single forward operation rather than step-by-step.
 
-    The Informer model utilizes a three-component approach to define its embedding:
+    The Informer models utilizes a three-component approach to define its embedding:
         1) It employs encoded autoregressive features obtained from a convolution network.
         2) It uses window-relative positional embeddings derived from harmonic functions.
         3) Absolute positional embeddings obtained from calendar features are utilized.
@@ -192,7 +192,7 @@ class Informer(BaseWindows):
     `futr_exog_list`: str list, future exogenous columns.<br>
     `hist_exog_list`: str list, historic exogenous columns.<br>
     `stat_exog_list`: str list, static exogenous columns.<br>
-    `exclude_insample_y`: bool=False, the model skips the autoregressive features y[t-input_size:t] if True.<br>
+    `exclude_insample_y`: bool=False, the models skips the autoregressive features y[t-input_size:t] if True.<br>
         `decoder_input_size_multiplier`: float = 0.5, .<br>
     `hidden_size`: int=128, units of embeddings and encoders.<br>
     `n_head`: int=4, controls number of multi-head's attention.<br>
@@ -213,12 +213,12 @@ class Informer(BaseWindows):
     `valid_batch_size`: int=None, number of different series in each validation and test batch, if None uses batch_size.<br>
     `windows_batch_size`: int=1024, number of windows to sample in each training batch, default uses all.<br>
     `inference_windows_batch_size`: int=1024, number of windows to sample in each inference batch.<br>
-    `start_padding_enabled`: bool=False, if True, the model will pad the time series with zeros at the beginning, by input size.<br>
+    `start_padding_enabled`: bool=False, if True, the models will pad the time series with zeros at the beginning, by input size.<br>
     `scaler_type`: str='robust', type of scaler for temporal inputs normalization see [temporal scalers](https://nixtla.github.io/neuralforecast/common.scalers.html).<br>
     `random_seed`: int=1, random_seed for pytorch initializer and numpy generators.<br>
     `num_workers_loader`: int=os.cpu_count(), workers to be used by `TimeSeriesDataLoader`.<br>
     `drop_last_loader`: bool=False, if True `TimeSeriesDataLoader` drops last non-full batch.<br>
-    `alias`: str, optional,  Custom name of the model.<br>
+    `alias`: str, optional,  Custom name of the models.<br>
     `optimizer`: Subclass of 'torch.optim.Optimizer', optional, user specified optimizer instead of the default choice (Adam).<br>
     `optimizer_kwargs`: dict, optional, list of parameters used by the user specified `optimizer`.<br>
     `**trainer_kwargs`: int,  keyword trainer arguments inherited from [PyTorch Lighning's trainer](https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.trainer.trainer.Trainer.html?highlight=trainer).<br>

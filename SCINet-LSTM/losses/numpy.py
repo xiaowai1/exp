@@ -230,7 +230,7 @@ def mase(
     `y` and `y_hat`. MASE measures the relative prediction
     accuracy of a forecasting method by comparinng the mean absolute errors
     of the prediction and the observed value against the mean
-    absolute errors of the seasonal naive model.
+    absolute errors of the seasonal naive models.
     The MASE partially composed the Overall Weighted Average (OWA),
     used in the M4 Competition.
 
@@ -279,8 +279,8 @@ def rmae(
 
     **Parameters:**<br>
     `y`: numpy array, observed values.<br>
-    `y_hat1`: numpy array. Predicted values of first model.<br>
-    `y_hat2`: numpy array. Predicted values of baseline model.<br>
+    `y_hat1`: numpy array. Predicted values of first models.<br>
+    `y_hat2`: numpy array. Predicted values of baseline models.<br>
     `weights`: numpy array, optional. Weights for weighted average.<br>
     `axis`: None or int, optional.Axis or axes along which to average a.<br>
         The default, axis=None, will average over all of the elements of

@@ -8,11 +8,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 from neuralforecast import NeuralForecast
-from neuralforecast.models import MLP, Informer
-from neuralforecast.losses.pytorch import MAE
-from neuralforecast.losses.pytorch import MQLoss, DistributionLoss
-from neuralforecast.tsdataset import TimeSeriesDataset
-from neuralforecast.utils import AirPassengers, AirPassengersPanel, AirPassengersStatic, augment_calendar_df
+import pywt
+from neuralforecast.models import Informer
+from neuralforecast.losses.pytorch import DistributionLoss
 matplotlib.use('TkAgg')
 plt.switch_backend('agg')
 
@@ -40,6 +38,21 @@ for target in ['avgcpu', 'avgmem']:
         # 划分数据集
         train_len = int(len(df) * 0.7)
         val_len = int(len(df) * 0.1)
+
+        # 选择要处理的时间序列
+        series = df['y'].values[:train_len]
+
+        # 进行 DWT 分解
+        wavelet = 'db4'  # 选择 Daubechies 小波
+        coeffs = pywt.wavedec(series, wavelet)
+
+        # 阈值去噪
+        threshold = 0.1
+        coeffs[1:] = (pywt.threshold(i, value=threshold, mode='soft') for i in coeffs[1:])
+        # 重构信号
+        reconstructed_series = pywt.waverec(coeffs, wavelet)
+        # 将重构后的信号赋值回数据框
+        df.loc[:train_len-1, 'y'] = reconstructed_series
 
         train_set = df.iloc[:train_len]
         val_set = df.iloc[train_len: train_len + val_len]

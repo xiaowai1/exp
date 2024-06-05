@@ -8,12 +8,12 @@ import pandas as pd
 import numpy as np
 
 # 从 CSV 文件中加载数据
-df = pd.read_csv('../SCINet/results/avgmem-ForecastResults.csv')  # 替换为你的 CSV 文件路径
-# df = pd.read_csv('../SCINet/results/avgcpu-ForecastResults.csv')  # 替换为你的 CSV 文件路径
+df = pd.read_csv('../Informer2/results/avgmem-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
+# df = pd.read_csv('../Informer2/results/avgcpu-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
 
 # 提取实际值和预测值列，并转换为 NumPy 数组
-y_true = df['Avgmemreal'].values
-# y_true = df['Avgcpureal'].values
+y_true = df['avgmem-true'].values
+# y_true = df['avgcpu-true'].values
 y_pred = df['forecast'].values
 
 # 删除含有 NaN 或 Inf 值的行
