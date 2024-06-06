@@ -11,9 +11,9 @@ from neuralforecast import NeuralForecast
 import pywt
 from neuralforecast.models import Informer
 from neuralforecast.losses.pytorch import DistributionLoss
+
 matplotlib.use('TkAgg')
 plt.switch_backend('agg')
-
 
 # 读取8个数据集并进行预处理
 clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
@@ -36,50 +36,93 @@ for target in ['avgcpu', 'avgmem']:
         df.rename(columns={f'{target}': 'y'}, inplace=True)
 
         # 划分数据集
-        train_len = int(len(df) * 0.7)
-        val_len = int(len(df) * 0.1)
+        train_len = int(len(df) * 0.9)
+        # val_len = int(len(df) * 0.1)
 
+        # 进行 MODWT 分解
+        wavelet = 'db4'  # 选择 Daubechies 小波
+        level = 2
+
+        def modwt_decompose(series, wavelet, level):
+            coeffs = []
+            V = series.copy()
+            # 构造滤波器
+            dec_lo, dec_hi, rec_lo, rec_hi = pywt.Wavelet(wavelet).filter_bank
+            for i in range(level):
+                V = np.pad(V, (len(V) % 2,), mode='constant')  # 填充信号
+                W = pywt.downcoef('d', V, wavelet, mode='per', level=1)  # 细节系数
+                V = pywt.downcoef('a', V, wavelet, mode='per', level=1)  # 近似系数
+                coeffs.append(W)
+
+            return V, coeffs
+
+        def modwt_reconstruct(V, coeffs, wavelet):
+            reconstructed = V.copy()
+            for W in reversed(coeffs):
+                reconstructed = pywt.upcoef('a', reconstructed, wavelet, level=1, take=len(series))
+                W_up = pywt.upcoef('d', W, wavelet, level=1, take=len(series))
+                reconstructed += W_up
+            return reconstructed
         # 选择要处理的时间序列
         series = df['y'].values[:train_len]
-
-        # 进行 DWT 分解
-        wavelet = 'db4'  # 选择 Daubechies 小波
-        coeffs = pywt.wavedec(series, wavelet)
-
+        # 分解
+        V, coeffs = modwt_decompose(series, wavelet, level)
         # 阈值去噪
-        threshold = 0.1
-        coeffs[1:] = (pywt.threshold(i, value=threshold, mode='soft') for i in coeffs[1:])
+        threshold = 0.2
+        coeffs = [pywt.threshold(W, value=threshold, mode='soft') for W in coeffs]
         # 重构信号
-        reconstructed_series = pywt.waverec(coeffs, wavelet)
+        reconstructed_series = modwt_reconstruct(V, coeffs, wavelet)
+
+        # # 进行 DWT 分解
+        # wavelet = 'db4'  # 选择 Daubechies 小波
+        # level = 2
+        # coeffs = pywt.wavedec(series, wavelet, level=level)
+        # # 阈值去噪
+        # threshold = 0.2
+        # coeffs[1:] = (pywt.threshold(i, value=threshold, mode='soft') for i in coeffs[1:])
+        # # 重构信号
+        # reconstructed_series = pywt.waverec(coeffs, wavelet)
+
+        # # 进行 CWT 分解
+        # scales = np.arange(1, len(series) + 1)  # 尺度范围
+        # wavelet = 'mexh'  # 选择 Mexican Hat 小波
+        # coeffs, freqs = pywt.cwt(series, scales, wavelet)
+        #
+        # # 阈值去噪
+        # threshold = 0.2
+        # coeffs = list(coeffs)  # 将生成器转换为列表
+        # coeffs[1:] = (pywt.threshold(i, value=threshold, mode='soft') for i in coeffs[1:])
+        # # 重构信号
+        # reconstructed_series = np.sum(coeffs, axis=0)
         # 将重构后的信号赋值回数据框
-        df.loc[:train_len-1, 'y'] = reconstructed_series
+        df.loc[:train_len - 1, 'y'] = reconstructed_series
 
         train_set = df.iloc[:train_len]
-        val_set = df.iloc[train_len: train_len + val_len]
+        # val_set = df.iloc[train_len: train_len + val_len]
         # 挨个预测
         if file == "../data/gc19_a.csv":
-            test_set = df.iloc[train_len + val_len:]
+            test_set = df.iloc[train_len:]
             test_datasets.append(test_set)
 
         # 将划分好的数据集存储在列表中
         train_datasets.append(train_set)
-        val_datasets.append(val_set)
+        # val_datasets.append(val_set)
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
-    val_df = pd.concat(val_datasets, ignore_index=True)
+    # val_df = pd.concat(val_datasets, ignore_index=True)
     test_df = pd.concat(test_datasets, ignore_index=True)
 
     model = Informer(h=12,
-                     input_size=24,
-                     hidden_size=16,
+                     input_size=96,
+                     hidden_size=32,
                      conv_hidden_size=32,
                      n_head=8,
                      loss=DistributionLoss(distribution='Normal', level=[80, 90]),
                      # futr_exog_list=calendar_cols,
                      scaler_type='robust',
                      learning_rate=1e-3,
-                     max_steps=5,
+                     max_steps=8,
                      val_check_steps=50,
                      # early_stop_patience_steps=2
                      )

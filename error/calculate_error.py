@@ -6,6 +6,7 @@
 # @Description : 误差计算
 import pandas as pd
 import numpy as np
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # 从 CSV 文件中加载数据
 df = pd.read_csv('../Informer2/results/avgmem-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
@@ -22,19 +23,23 @@ y_true = y_true[valid_idx]
 y_pred = y_pred[valid_idx]
 
 # 计算均方误差 (MSE)
-mse = np.mean((y_true - y_pred)**2)
+# mse = np.mean((y_true - y_pred)**2)
 
 # 计算平均绝对误差 (MAE)
-mae = np.mean(np.abs(y_true - y_pred))
+mae = mean_absolute_error(y_true, y_pred)
+
+# 计算平均绝对百分比误差 (MAPE)
+mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 # 计算均方根误差 (RMSE)
-rmse = np.sqrt(mse)
+rmse = np.sqrt(mean_squared_error(y_true, y_pred))
 
 # 计算对称平均绝对百分比误差 (SMAPE)
-smape = np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred)))
+# smape = np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred)))
 
 # 输出结果
-print("Mean Squared Error (MSE):", mse)
+# print("Mean Squared Error (MSE):", mse)
 print("Mean Absolute Error (MAE):", mae)
+print("Mean Absolute Percentage Error (MAPE):", mape)
 print("Root Mean Squared Error (RMSE):", rmse)
-print("Symmetric Mean Absolute Percentage Error (SMAPE):", smape)
+# print("Symmetric Mean Absolute Percentage Error (SMAPE):", smape)
