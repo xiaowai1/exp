@@ -11,7 +11,7 @@ plt.switch_backend('agg')
 matplotlib.use('TkAgg')
 
 # 定义集群名称
-clusters = ['gc19_a', 'gc19_b', 'gc19_c']
+clusters = ['gc19_a', 'gc19_d', 'gc19_g']
 # clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
 # 生成文件路径
 files = ['../data/' + cluster + '.csv' for cluster in clusters]

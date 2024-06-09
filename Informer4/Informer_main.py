@@ -37,32 +37,6 @@ for target in ['avgcpu', 'avgmem']:
 
         # 划分数据集
         train_len = int(len(df) * 0.9)
-
-        # 进行 MODWT 分解
-        wavelet = 'db4'  # 选择 Daubechies 小波
-        level = 2
-
-        def modwt_decompose(series, wavelet, level):
-            coeffs = []
-            V = series.copy()
-            # 构造滤波器
-            dec_lo, dec_hi, rec_lo, rec_hi = pywt.Wavelet(wavelet).filter_bank
-            for i in range(level):
-                V = np.pad(V, (len(V) % 2,), mode='constant')  # 填充信号
-                W = pywt.downcoef('d', V, wavelet, mode='per', level=1)  # 细节系数
-                V = pywt.downcoef('a', V, wavelet, mode='per', level=1)  # 近似系数
-                coeffs.append(W)
-
-            return V, coeffs
-
-        # 选择要处理的时间序列
-        series = df['y'].values[:train_len]
-        # 分解
-        V, coeffs = modwt_decompose(series, wavelet, level)
-        # 阈值去噪
-        threshold = 0.2
-        coeffs = [pywt.threshold(W, value=threshold, mode='soft') for W in coeffs]
-
         train_set = df.iloc[:train_len]
         # 挨个预测
         if file == "../data/gc19_a.csv":
@@ -75,7 +49,6 @@ for target in ['avgcpu', 'avgmem']:
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
-    # val_df = pd.concat(val_datasets, ignore_index=True)
     test_df = pd.concat(test_datasets, ignore_index=True)
 
     model = Informer(h=12,
@@ -84,12 +57,10 @@ for target in ['avgcpu', 'avgmem']:
                      conv_hidden_size=32,
                      n_head=8,
                      loss=DistributionLoss(distribution='Normal', level=[80, 90]),
-                     # futr_exog_list=calendar_cols,
                      scaler_type='robust',
                      learning_rate=1e-3,
                      max_steps=8,
                      val_check_steps=50,
-                     # early_stop_patience_steps=2
                      )
 
     nf = NeuralForecast(

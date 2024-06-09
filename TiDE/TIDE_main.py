@@ -34,28 +34,25 @@ for target in ['avgcpu', 'avgmem']:
         df.rename(columns={f'{target}': 'y'}, inplace=True)
 
         # 划分数据集
-        train_len = int(len(df) * 0.7)
-        val_len = int(len(df) * 0.1)
+        train_len = int(len(df) * 0.9)
+        # val_len = int(len(df) * 0.1)
 
         train_set = df.iloc[:train_len]
-        val_set = df.iloc[train_len: train_len + val_len]
         # 挨个预测
         if file == "../data/gc19_a.csv":
-            test_set = df.iloc[train_len + val_len:]
+            test_set = df.iloc[train_len:]
             test_datasets.append(test_set)
 
         # 将划分好的数据集存储在列表中
         train_datasets.append(train_set)
-        val_datasets.append(val_set)
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
-    val_df = pd.concat(val_datasets, ignore_index=True)
     test_df = pd.concat(test_datasets, ignore_index=True)
 
     # 创建NeuralForecast对象
     nf = NeuralForecast(
-        models=[TiDE(h=12, input_size=24,
+        models=[TiDE(h=12, input_size=96,
                      loss=DistributionLoss(distribution='Normal', level=[80, 90]))],
         freq='5T'
     )

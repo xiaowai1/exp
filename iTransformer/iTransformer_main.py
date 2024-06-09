@@ -8,10 +8,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 from neuralforecast import NeuralForecast
-import pywt
-from neuralforecast.models import Informer
-from neuralforecast.losses.pytorch import DistributionLoss
-
+from neuralforecast.models import iTransformer
+from scipy.signal import savgol_filter
+from PyEMD import CEEMDAN
+from neuralforecast.losses.pytorch import DistributionLoss, MAE
+from iTransformer.models.CustomiTransformer import CustomiTransformer
 matplotlib.use('TkAgg')
 plt.switch_backend('agg')
 
@@ -21,6 +22,7 @@ files = ['../data/' + cluster + '.csv' for cluster in clusters]
 
 # 存储划分好的数据集
 train_datasets, val_datasets, test_datasets = [], [], []
+
 
 # 循环处理每个数据集
 for target in ['avgcpu', 'avgmem']:
@@ -34,35 +36,19 @@ for target in ['avgcpu', 'avgmem']:
         df['unique_id'] = file.split('/')[-1].split('.')[0]
         df.rename(columns={'date': 'ds'}, inplace=True)
         df.rename(columns={f'{target}': 'y'}, inplace=True)
-
         # 划分数据集
         train_len = int(len(df) * 0.9)
 
-        # 进行 MODWT 分解
-        wavelet = 'db4'  # 选择 Daubechies 小波
-        level = 2
+        # 应用Savitzky-Golay滤波器平滑数据
+        df['y'] = savgol_filter(df['y'], window_length=11, polyorder=2)
+        # CEEMDAN 分解
+        ceemdan = CEEMDAN()
+        imfs = ceemdan(df['y'].values[:train_len])
+        # 重构数据
+        reconstructed_data = np.sum(imfs[:-1], axis=0)  # 不包括最后一个残差项
 
-        def modwt_decompose(series, wavelet, level):
-            coeffs = []
-            V = series.copy()
-            # 构造滤波器
-            dec_lo, dec_hi, rec_lo, rec_hi = pywt.Wavelet(wavelet).filter_bank
-            for i in range(level):
-                V = np.pad(V, (len(V) % 2,), mode='constant')  # 填充信号
-                W = pywt.downcoef('d', V, wavelet, mode='per', level=1)  # 细节系数
-                V = pywt.downcoef('a', V, wavelet, mode='per', level=1)  # 近似系数
-                coeffs.append(W)
-
-            return V, coeffs
-
-        # 选择要处理的时间序列
-        series = df['y'].values[:train_len]
-        # 分解
-        V, coeffs = modwt_decompose(series, wavelet, level)
-        # 阈值去噪
-        threshold = 0.2
-        coeffs = [pywt.threshold(W, value=threshold, mode='soft') for W in coeffs]
-
+        # 替换平滑后的数据
+        df['y'].values[:train_len] = reconstructed_data
         train_set = df.iloc[:train_len]
         # 挨个预测
         if file == "../data/gc19_a.csv":
@@ -75,22 +61,16 @@ for target in ['avgcpu', 'avgmem']:
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
-    # val_df = pd.concat(val_datasets, ignore_index=True)
     test_df = pd.concat(test_datasets, ignore_index=True)
 
-    model = Informer(h=12,
-                     input_size=96,
-                     hidden_size=32,
-                     conv_hidden_size=32,
-                     n_head=8,
-                     loss=DistributionLoss(distribution='Normal', level=[80, 90]),
-                     # futr_exog_list=calendar_cols,
-                     scaler_type='robust',
-                     learning_rate=1e-3,
-                     max_steps=8,
-                     val_check_steps=50,
-                     # early_stop_patience_steps=2
-                     )
+    model = iTransformer(h=12,
+                         input_size=12,
+                         n_series=12,
+                         loss=MAE(),
+                         val_check_steps=1,
+                         hidden_size=64,
+                         max_steps=1
+                         )
 
     nf = NeuralForecast(
         models=[model],
@@ -100,7 +80,6 @@ for target in ['avgcpu', 'avgmem']:
     # 训练模型
     nf.fit(df=train_df)
 
-    # Y_hat_df = nf.predict(test_df)
     # 分块预测
     predictions_list = []
     for i in range(0, len(test_df), 12):
@@ -114,17 +93,15 @@ for target in ['avgcpu', 'avgmem']:
     Y_hat_df = pd.concat(predictions_list).reset_index(drop=True)
     plot_df = pd.concat([test_df, Y_hat_df], axis=1)
     plot_df = plot_df[plot_df.unique_id == 'gc19_a'].drop('unique_id', axis=1)
-    df = plot_df[['y', 'Informer']].rename(columns={'y': f'{target}-true', 'Informer': 'forecast'})
+    df = plot_df[['y', 'iTransformer']].rename(columns={'y': f'{target}-true', 'iTransformer': 'forecast'})
     df.to_csv('./results/{}-gc19_a-Forecast.csv'.format(target), index=False)
     plt.figure()
     # 设置绘图风格
     plt.style.use('ggplot')
-    plot_df[['y', 'Informer']].plot(linewidth=2)
+    plot_df[['y', 'iTransformer']].plot(linewidth=2)
     plt.grid()
     plt.title(f'{target} gc19_a real vs forecast')
     plt.xlabel('date')
     plt.ylabel(f'{target}')
     plt.legend()
     plt.savefig(f"{target}.png")
-
-

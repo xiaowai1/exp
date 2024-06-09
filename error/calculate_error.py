@@ -9,12 +9,12 @@ import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # 从 CSV 文件中加载数据
-df = pd.read_csv('../Informer2/results/avgmem-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
-# df = pd.read_csv('../Informer2/results/avgcpu-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
+# df = pd.read_csv('../iTransformer/results/avgmem-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
+df = pd.read_csv('../iTransformer/results/avgcpu-gc19_a-Forecast.csv')  # 替换为你的 CSV 文件路径
 
 # 提取实际值和预测值列，并转换为 NumPy 数组
-y_true = df['avgmem-true'].values
-# y_true = df['avgcpu-true'].values
+# y_true = df['avgmem-true'].values
+y_true = df['avgcpu-true'].values
 y_pred = df['forecast'].values
 
 # 删除含有 NaN 或 Inf 值的行
