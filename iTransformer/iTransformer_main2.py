@@ -3,15 +3,18 @@
 # @Author : ChiXiaoWai
 # @File : iTransformer_main.py
 # @Project : exp
+# 实验场景二
 import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 from neuralforecast import NeuralForecast
-import pywt
-from neuralforecast.models import Informer
-from neuralforecast.losses.pytorch import DistributionLoss
+from neuralforecast.models import iTransformer
+from scipy.signal import savgol_filter
+from PyEMD import CEEMDAN
+from neuralforecast.losses.pytorch import DistributionLoss, MAE
+from iTransformer.models.CustomiTransformer import CustomiTransformer
 
 matplotlib.use('TkAgg')
 plt.switch_backend('agg')
@@ -24,9 +27,10 @@ files = ['../data/' + cluster + '.csv' for cluster in clusters]
 train_datasets, val_datasets, test_datasets = [], [], []
 test_dictionary = {}
 
+test_index = 0
 # 循环处理每个数据集
 for target in ['avgcpu', 'avgmem']:
-    for file in files:
+    for i, file in enumerate(files):
         # 读取数据集
         df = pd.read_csv(file, parse_dates=['date'])
         df['date'] = pd.to_datetime(df['date'], unit='us')
@@ -36,32 +40,30 @@ for target in ['avgcpu', 'avgmem']:
         df['unique_id'] = file.split('/')[-1].split('.')[0]
         df.rename(columns={'date': 'ds'}, inplace=True)
         df.rename(columns={f'{target}': 'y'}, inplace=True)
+        # 应用Savitzky-Golay滤波器平滑数据
+        df['y'] = savgol_filter(df['y'], window_length=11, polyorder=2)
+        if i == test_index:
+            test_set = df
+            file_name = os.path.basename(file)  # 获取文件名部分
+            data_name = file_name.split(".")[0]  # 去掉扩展名部分
+            test_dictionary[data_name] = test_set
+            continue
 
-        # 划分数据集
-        train_len = int(len(df) * 0.9)
-        train_set = df.iloc[:train_len]
-        test_set = df.iloc[train_len:]
-        file_name = os.path.basename(file)  # 获取文件名部分
-        data_name = file_name.split(".")[0]  # 去掉扩展名部分
-        test_dictionary[data_name] = test_set
-
+        train_set = df
         # 将划分好的数据集存储在列表中
         train_datasets.append(train_set)
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
 
-    model = Informer(h=12,
-                     input_size=96,
-                     hidden_size=32,
-                     conv_hidden_size=32,
-                     n_head=8,
-                     loss=DistributionLoss(distribution='Normal', level=[80, 90]),
-                     scaler_type='robust',
-                     learning_rate=1e-3,
-                     max_steps=8,
-                     val_check_steps=50,
-                     )
+    model = iTransformer(h=12,
+                         input_size=12,
+                         n_series=12,
+                         loss=MAE(),
+                         val_check_steps=1,
+                         hidden_size=64,
+                         max_steps=1
+                         )
 
     nf = NeuralForecast(
         models=[model],
@@ -88,17 +90,15 @@ for target in ['avgcpu', 'avgmem']:
         Y_hat_df.reset_index(drop=True, inplace=True)
         plot_df = pd.concat([test_df, Y_hat_df], axis=1)
         plot_df = plot_df[plot_df.unique_id == key].drop('unique_id', axis=1)
-        df = plot_df[['y', 'Informer']].rename(columns={'y': f'{target}-true', 'Informer': 'forecast'})
-        df.to_csv(f'./experiment1/results/{target}/{key}-{target}-Forecast.csv', index=False)
+        df = plot_df[['y', 'iTransformer']].rename(columns={'y': f'{target}-true', 'iTransformer': 'forecast'})
+        df.to_csv(f'./experiment2/results/{target}/{key}-{target}-Forecast.csv', index=False)
         plt.figure()
         # 设置绘图风格
         plt.style.use('ggplot')
-        plot_df[['y', 'Informer']].plot(linewidth=2)
+        plot_df[['y', 'iTransformer']].plot(linewidth=2)
         plt.grid()
         plt.title(f'{key} {target} real vs forecast')
         plt.xlabel('date')
         plt.ylabel(f'{target}')
         plt.legend()
-        plt.savefig(f"./experiment1/images/{key}-{target}.png")
-
-
+        plt.savefig(f"./experiment2/images/{key}-{target}.png")

@@ -3,6 +3,7 @@
 # @Author : ChiXiaoWai
 # @File : LSTM_main.py
 # @Project : exp
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
@@ -19,6 +20,7 @@ files = ['../data/' + cluster + '.csv' for cluster in clusters]
 
 # 存储划分好的数据集
 train_datasets, val_datasets, test_datasets = [], [], []
+test_dictionary = {}
 
 # 循环处理每个数据集
 for target in ['avgcpu', 'avgmem']:
@@ -38,11 +40,13 @@ for target in ['avgcpu', 'avgmem']:
         # val_len = int(len(df) * 0.1)
 
         train_set = df.iloc[:train_len]
-        # val_set = df.iloc[train_len: train_len + val_len]
         # 挨个预测
-        if file == "../data/gc19_a.csv":
-            test_set = df.iloc[train_len:]
-            test_datasets.append(test_set)
+        # if file == "../data/gc19_a.csv":
+        test_set = df.iloc[train_len:]
+        # test_datasets.append(test_set)
+        file_name = os.path.basename(file)  # 获取文件名部分
+        data_name = file_name.split(".")[0]  # 去掉扩展名部分
+        test_dictionary[data_name] = test_set
 
         # 将划分好的数据集存储在列表中
         train_datasets.append(train_set)
@@ -50,8 +54,6 @@ for target in ['avgcpu', 'avgmem']:
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
-    # val_df = pd.concat(val_datasets, ignore_index=True)
-    test_df = pd.concat(test_datasets, ignore_index=True)
 
     # 创建NeuralForecast对象
     nf = NeuralForecast(
@@ -63,34 +65,33 @@ for target in ['avgcpu', 'avgmem']:
     # 训练模型
     nf.fit(df=train_df)
 
-    # Y_hat_df = nf.predict(test_df)
-    # 分块预测
-    predictions_list = []
-    for i in range(0, len(test_df), 12):
-        test_chunk = test_df.iloc[i:i + 12]
-        if len(test_chunk) < 12:
-            break  # 如果剩余数据不足12个，则停止
-        pred_chunk = nf.predict(test_chunk)
-        predictions_list.append(pred_chunk)
+    for key in test_dictionary:
+        test_df = test_dictionary.get(key)
+        # 分块预测
+        predictions_list = []
+        for i in range(0, len(test_df), 12):
+            test_chunk = test_df.iloc[i:i + 12]
+            if len(test_chunk) < 12:
+                break  # 如果剩余数据不足12个，则停止
+            pred_chunk = nf.predict(test_chunk)
+            predictions_list.append(pred_chunk)
 
-    # 合并所有预测结果
-    Y_hat_df = pd.concat(predictions_list).reset_index(drop=True)
-
-    # Y_hat_df = Y_hat_df.reset_index(drop=False).drop(columns=['unique_id', 'ds'])
-    plot_df = pd.concat([test_df, Y_hat_df], axis=1)
-    # plot_df = pd.concat([train_df, plot_df])
-
-    plot_df = plot_df[plot_df.unique_id == 'gc19_a'].drop('unique_id', axis=1)
-    df = plot_df[['y', 'LSTM']].rename(columns={'y': f'{target}-true', 'LSTM': 'forecast'})
-    df.to_csv('./results/{}-gc19_a-Forecast.csv'.format(target), index=False)
-    plt.figure()
-    # 设置绘图风格
-    plt.style.use('ggplot')
-    plot_df[['y', 'LSTM']].plot(linewidth=2)
-    plt.grid()
-    plt.title(f'{target} gc19_a real vs forecast')
-    plt.xlabel('date')
-    plt.ylabel(f'{target}')
-    plt.legend()
-    plt.savefig(f"{target}.png")
+        # 合并所有预测结果
+        Y_hat_df = pd.concat(predictions_list).reset_index(drop=True)
+        test_df.reset_index(drop=True, inplace=True)
+        Y_hat_df.reset_index(drop=True, inplace=True)
+        plot_df = pd.concat([test_df, Y_hat_df], axis=1)
+        plot_df = plot_df[plot_df.unique_id == key].drop('unique_id', axis=1)
+        df = plot_df[['y', 'LSTM']].rename(columns={'y': f'{target}-true', 'LSTM': 'forecast'})
+        df.to_csv(f'./experiment1/results/{target}/{key}-{target}-Forecast.csv', index=False)
+        plt.figure()
+        # 设置绘图风格
+        plt.style.use('ggplot')
+        plot_df[['y', 'LSTM']].plot(linewidth=2)
+        plt.grid()
+        plt.title(f'{key} {target} real vs forecast')
+        plt.xlabel('date')
+        plt.ylabel(f'{target}')
+        plt.legend()
+        plt.savefig(f"./experiment1/images/{key}-{target}.png")
 

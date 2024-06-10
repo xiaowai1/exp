@@ -3,6 +3,8 @@
 # @Author : ChiXiaoWai
 # @File : iTransformer_main.py
 # @Project : exp
+# 实验场景一
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,6 +15,7 @@ from scipy.signal import savgol_filter
 from PyEMD import CEEMDAN
 from neuralforecast.losses.pytorch import DistributionLoss, MAE
 from iTransformer.models.CustomiTransformer import CustomiTransformer
+
 matplotlib.use('TkAgg')
 plt.switch_backend('agg')
 
@@ -22,7 +25,7 @@ files = ['../data/' + cluster + '.csv' for cluster in clusters]
 
 # 存储划分好的数据集
 train_datasets, val_datasets, test_datasets = [], [], []
-
+test_dictionary = {}
 
 # 循环处理每个数据集
 for target in ['avgcpu', 'avgmem']:
@@ -41,27 +44,29 @@ for target in ['avgcpu', 'avgmem']:
 
         # 应用Savitzky-Golay滤波器平滑数据
         df['y'] = savgol_filter(df['y'], window_length=11, polyorder=2)
-        # CEEMDAN 分解
-        ceemdan = CEEMDAN()
-        imfs = ceemdan(df['y'].values[:train_len])
-        # 重构数据
-        reconstructed_data = np.sum(imfs[:-1], axis=0)  # 不包括最后一个残差项
-
-        # 替换平滑后的数据
-        df['y'].values[:train_len] = reconstructed_data
+        # train_datasets.append(df.iloc[:train_len])
+        # # CEEMDAN 分解
+        # ceemdan = CEEMDAN()
+        # imfs = ceemdan(df['y'].values[:train_len])
+        # # 重构数据
+        # reconstructed_data = np.sum(imfs[:-1], axis=0)  # 不包括最后一个残差项
+        #
+        # # 替换平滑后的数据
+        # df['y'].values[:train_len] = reconstructed_data
         train_set = df.iloc[:train_len]
         # 挨个预测
-        if file == "../data/gc19_a.csv":
-            test_set = df.iloc[train_len:]
-            test_datasets.append(test_set)
+        # if file == "../data/gc19_a.csv":
+        test_set = df.iloc[train_len:]
+        # test_datasets.append(test_set)
+        file_name = os.path.basename(file)  # 获取文件名部分
+        data_name = file_name.split(".")[0]  # 去掉扩展名部分
+        test_dictionary[data_name] = test_set
 
         # 将划分好的数据集存储在列表中
         train_datasets.append(train_set)
-        # val_datasets.append(val_set)
 
     # 合并所有训练集、验证集和测试集
     train_df = pd.concat(train_datasets, ignore_index=True)
-    test_df = pd.concat(test_datasets, ignore_index=True)
 
     model = iTransformer(h=12,
                          input_size=12,
@@ -80,28 +85,32 @@ for target in ['avgcpu', 'avgmem']:
     # 训练模型
     nf.fit(df=train_df)
 
-    # 分块预测
-    predictions_list = []
-    for i in range(0, len(test_df), 12):
-        test_chunk = test_df.iloc[i:i + 12]
-        if len(test_chunk) < 12:
-            break  # 如果剩余数据不足12个，则停止
-        pred_chunk = nf.predict(test_chunk)
-        predictions_list.append(pred_chunk)
+    for key in test_dictionary:
+        test_df = test_dictionary.get(key)
+        # 分块预测
+        predictions_list = []
+        for i in range(0, len(test_df), 12):
+            test_chunk = test_df.iloc[i:i + 12]
+            if len(test_chunk) < 12:
+                break  # 如果剩余数据不足12个，则停止
+            pred_chunk = nf.predict(test_chunk)
+            predictions_list.append(pred_chunk)
 
-    # 合并所有预测结果
-    Y_hat_df = pd.concat(predictions_list).reset_index(drop=True)
-    plot_df = pd.concat([test_df, Y_hat_df], axis=1)
-    plot_df = plot_df[plot_df.unique_id == 'gc19_a'].drop('unique_id', axis=1)
-    df = plot_df[['y', 'iTransformer']].rename(columns={'y': f'{target}-true', 'iTransformer': 'forecast'})
-    df.to_csv('./results/{}-gc19_a-Forecast.csv'.format(target), index=False)
-    plt.figure()
-    # 设置绘图风格
-    plt.style.use('ggplot')
-    plot_df[['y', 'iTransformer']].plot(linewidth=2)
-    plt.grid()
-    plt.title(f'{target} gc19_a real vs forecast')
-    plt.xlabel('date')
-    plt.ylabel(f'{target}')
-    plt.legend()
-    plt.savefig(f"{target}.png")
+        # 合并所有预测结果
+        Y_hat_df = pd.concat(predictions_list).reset_index(drop=True)
+        test_df.reset_index(drop=True, inplace=True)
+        Y_hat_df.reset_index(drop=True, inplace=True)
+        plot_df = pd.concat([test_df, Y_hat_df], axis=1)
+        plot_df = plot_df[plot_df.unique_id == key].drop('unique_id', axis=1)
+        df = plot_df[['y', 'iTransformer']].rename(columns={'y': f'{target}-true', 'iTransformer': 'forecast'})
+        df.to_csv(f'./experiment1/results/{target}/{key}-{target}-Forecast.csv', index=False)
+        plt.figure()
+        # 设置绘图风格
+        plt.style.use('ggplot')
+        plot_df[['y', 'iTransformer']].plot(linewidth=2)
+        plt.grid()
+        plt.title(f'{key} {target} real vs forecast')
+        plt.xlabel('date')
+        plt.ylabel(f'{target}')
+        plt.legend()
+        plt.savefig(f"./experiment1/images/{key}-{target}.png")
