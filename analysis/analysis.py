@@ -88,7 +88,7 @@ def acfDataPlot(data):
 
     # 创建 ACF 图
     fig, ax1 = plt.subplots(figsize=(10, 6))
-    plot_acf(data, ax=ax1, lags=40)
+    plot_acf(data, ax=ax1, lags=300)
     ax1.set_title('自相关函数 (ACF)')
     ax1.set_xlabel('滞后')
     ax1.set_ylabel('自相关')
@@ -109,7 +109,7 @@ def acfDataPlot(data):
 
     # 创建 PACF 图
     fig, ax2 = plt.subplots(figsize=(10, 6))
-    plot_pacf(data, ax=ax2, lags=40)
+    plot_pacf(data, ax=ax2, lags=100)
     ax2.set_title('偏自相关函数 (PACF)')
     ax2.set_xlabel('滞后')
     ax2.set_ylabel('偏自相关')
@@ -126,7 +126,7 @@ def acfDataPlot(data):
     plt.close()
 
 
-calculate_trend(column_data, column_data2)
+# calculate_trend(column_data, column_data2)
 # analyze_correlation(column_data, column_data2)
-# acfDataPlot(column_data)
+acfDataPlot(column_data)
 # FourierDataPlot(column_data)

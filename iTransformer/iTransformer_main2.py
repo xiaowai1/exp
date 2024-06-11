@@ -27,7 +27,7 @@ files = ['../data/' + cluster + '.csv' for cluster in clusters]
 train_datasets, val_datasets, test_datasets = [], [], []
 test_dictionary = {}
 
-test_index = 0
+test_index = 7
 # 循环处理每个数据集
 for target in ['avgcpu', 'avgmem']:
     for i, file in enumerate(files):

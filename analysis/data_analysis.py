@@ -11,12 +11,12 @@ plt.switch_backend('agg')
 matplotlib.use('TkAgg')
 
 # 定义集群名称
-clusters = ['gc19_a', 'gc19_d', 'gc19_g']
+clusters = ['gc19_a']
 # clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
 # 生成文件路径
 files = ['../data/' + cluster + '.csv' for cluster in clusters]
 # "Init", "Frequency"
-type = "Frequency"
+type = "Init"
 
 # 初始数据分析
 if type == "Init":
@@ -25,7 +25,7 @@ if type == "Init":
     # 遍历每个文件，读取数据并绘制 cpu 列到同一张图表中
     for file in files:
         # 读取数据
-        data = pd.read_csv(file, index_col=['date'], parse_dates=['date'])
+        data = pd.read_csv(file, index_col=['date'], parse_dates=['date']).iloc[:2880]
         data.index = pd.to_datetime(data.index, unit='us')
 
         # 检查并绘制 cpu 列
@@ -48,7 +48,7 @@ if type == "Init":
     # 遍历每个文件，读取数据并绘制 mem 列到同一张图表中
     for file in files:
         # 读取数据
-        data = pd.read_csv(file, index_col=['date'], parse_dates=['date'])
+        data = pd.read_csv(file, index_col=['date'], parse_dates=['date']).iloc[:2880]
         data.index = pd.to_datetime(data.index, unit='us')
 
         # 检查并绘制 mem 列

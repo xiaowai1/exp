@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 from neuralforecast.common._modules import TransEncoder, TransEncoderLayer, AttentionLayer
 from neuralforecast.models import iTransformer
-from neuralforecast.models.informer import ProbAttention, ConvLayer
+from neuralforecast.models.informer import ProbAttention
 
 
 class CustomiTransformer(iTransformer):
@@ -34,7 +34,6 @@ class CustomiTransformer(iTransformer):
             ],
             norm_layer=torch.nn.LayerNorm(self.hidden_size),
         )
-        self.projector = nn.Linear(self.hidden_size, self.h, bias=True)
 
     def forward(self, x):
         x = super(CustomiTransformer, self).forward(x)
