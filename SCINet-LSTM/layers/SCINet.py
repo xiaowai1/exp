@@ -115,17 +115,17 @@ class Model(nn.Module):
         self.fc = nn.Linear(configs.seq_len, configs.pred_len)
 
     def forward(self, x):
-        x = self.rev(x, 'norm') if self.rev else x  # 16, 96, 2
-        res = x     # 16, 96, 2
-        x = self.encoder(x)     # 16, 96, 2
-        x += res    # 16, 96, 2
+        x = self.rev(x, 'norm') if self.rev else x  # 16, 6, 2
+        res = x     # 16, 6, 2
+        x = self.encoder(x)     # 16, 6, 2
+        x += res    # 16, 6, 2
 
         # 将输入传递给 LSTM
-        x, _ = self.lstm(x)     # x:16, 96, 2   _: 1, 16, 512
+        x, _ = self.lstm(x)     # x:16, 6, 2   _: 1, 16, 512
 
         # 使用 LSTM 的输出进行预测
-        x = self.projection(x.transpose(1, 2))  # 16, 12, 96
-        x = F.relu(x)   # 16, 12, 96
+        x = self.projection(x.transpose(1, 2))  # 16, 12, 6
+        x = F.relu(x)   # 16, 12, 6
         x = self.fc(x.squeeze(2))
 
         x = self.rev(x, 'denorm') if self.rev else x

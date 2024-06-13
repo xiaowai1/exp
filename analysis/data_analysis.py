@@ -11,12 +11,12 @@ plt.switch_backend('agg')
 matplotlib.use('TkAgg')
 
 # 定义集群名称
-clusters = ['gc19_a']
+clusters = ['gc19_a', 'gc19_b', 'gc19_d']
 # clusters = ['gc19_a', 'gc19_b', 'gc19_c', 'gc19_d', 'gc19_e', 'gc19_f', 'gc19_g', 'gc19_h']
 # 生成文件路径
 files = ['../data/' + cluster + '.csv' for cluster in clusters]
 # "Init", "Frequency"
-type = "Init"
+type = "Frequency"
 
 # 初始数据分析
 if type == "Init":
@@ -78,11 +78,13 @@ elif type == "Frequency":
         # 提取 CPU 使用率数据
         cpu_data = data['avgcpu'].dropna().values
         # 绘制 CPU 使用率的直方图
-        plt.hist(cpu_data, bins=150, alpha=0.7, edgecolor='black', label=file.split('/')[-1])
+        plt.hist(cpu_data, bins=250, alpha=1, edgecolor='black', label=file.split('/')[-1])
     # 添加标题和标签
-    plt.title('CPU Usage Distribution')
-    plt.xlabel('CPU Usage')
-    plt.ylabel('Frequency')
+    plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文显示
+    plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+    plt.title('CPU负载分布图')
+    plt.xlabel('CPU负载')
+    plt.ylabel('频率')
     plt.legend()
     # 保存图像
     plt.savefig('cpu_distribution.png')
@@ -98,11 +100,11 @@ elif type == "Frequency":
         # 提取内存使用率数据
         mem_data = data['avgmem'].dropna().values
         # 绘制内存使用率的直方图
-        plt.hist(mem_data, bins=150, alpha=0.7, edgecolor='black', label=file.split('/')[-1])
+        plt.hist(mem_data, bins=250, alpha=1, edgecolor='black', label=file.split('/')[-1])
     # 添加标题和标签
-    plt.title('Memory Usage Distribution')
-    plt.xlabel('Memory Usage')
-    plt.ylabel('Frequency')
+    plt.title('内存负载分布图')
+    plt.xlabel('内存负载')
+    plt.ylabel('频率')
     plt.legend()
     # 保存图像
     plt.savefig('mem_distribution.png')

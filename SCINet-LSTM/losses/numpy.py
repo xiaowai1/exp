@@ -134,7 +134,7 @@ def rmse(
     """
     return np.sqrt(mse(y, y_hat, weights, axis))
 
-# %% ../../nbs/losses.numpy.ipynb 24
+# %% ../../nbs/losses.numpy.ipynb 2
 def mape(
     y: np.ndarray,
     y_hat: np.ndarray,
@@ -144,14 +144,14 @@ def mape(
     """Mean Absolute Percentage Error
 
     Calculates Mean Absolute Percentage Error  between
-    `y` and `y_hat`. MAPE measures the relative prediction
+    `y` and `y_hat`. MSE measures the relative prediction
     accuracy of a forecasting method by calculating the percentual deviation
     of the prediction and the observed value at a given time and
     averages these devations over the length of the series.
-    The closer to zero an observed value is, the higher penalty MAPE loss
+    The closer to zero an observed value is, the higher penalty MSE loss
     assigns to the corresponding error.
 
-    $$ \mathrm{MAPE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) = \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|} $$
+    $$ \mathrm{MSE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) = \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|} $$
 
     **Parameters:**<br>
     `y`: numpy array, Actual values.<br>
@@ -186,7 +186,7 @@ def smape(
     absolute values for the prediction and observed value at a
     given time, then averages these devations over the length
     of the series. This allows the SMAPE to have bounds between
-    0% and 200% which is desirable compared to normal MAPE that
+    0% and 200% which is desirable compared to normal MSE that
     may be undetermined when the target is zero.
 
     $$ \mathrm{sMAPE}_{2}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) = \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|+|\hat{y}_{\\tau}|} $$
@@ -240,7 +240,7 @@ def mase(
     `y`: numpy array, (batch_size, output_size), Actual values.<br>
     `y_hat`: numpy array, (batch_size, output_size)), Predicted values.<br>
     `y_insample`: numpy array, (batch_size, input_size), Actual insample Seasonal Naive predictions.<br>
-    `seasonality`: int. Main frequency of the time series; Hourly 24,  Daily 7, Weekly 52, Monthly 12, Quarterly 4, Yearly 1.
+    `seasonality`: int. Main frequency of the time series; Hourly 2,  Daily 7, Weekly 52, Monthly 12, Quarterly 4, Yearly 1.
     `mask`: numpy array, Specifies date stamps per serie to consider in loss.<br>
 
     **Returns:**<br>

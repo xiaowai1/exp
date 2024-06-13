@@ -125,8 +125,24 @@ def acfDataPlot(data):
     plt.savefig('./analysis/pacf_plot.png')
     plt.close()
 
+def Heatmap():
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    # 从 CSV 文件加载数据
+    data = pd.read_csv('../data/gc19_a.csv', index_col=0)
+
+    # 绘制热力图
+    plt.imshow(data, cmap='hot', interpolation='nearest')
+    plt.colorbar()
+    plt.title('Heatmap of Data from CSV')
+    plt.xlabel('Features')
+    plt.ylabel('Samples')
+    plt.savefig("./heatmap.png")
+
 
 # calculate_trend(column_data, column_data2)
 # analyze_correlation(column_data, column_data2)
-acfDataPlot(column_data)
+# acfDataPlot(column_data)
 # FourierDataPlot(column_data)
+Heatmap()

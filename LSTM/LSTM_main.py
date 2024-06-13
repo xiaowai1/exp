@@ -21,6 +21,7 @@ files = ['../data/' + cluster + '.csv' for cluster in clusters]
 # 存储划分好的数据集
 train_datasets, val_datasets, test_datasets = [], [], []
 test_dictionary = {}
+pre_step = 12
 
 # 循环处理每个数据集
 for target in ['avgcpu', 'avgmem']:
@@ -57,8 +58,12 @@ for target in ['avgcpu', 'avgmem']:
 
     # 创建NeuralForecast对象
     nf = NeuralForecast(
-        models=[LSTM(h=12, input_size=96,
-                     loss=DistributionLoss(distribution='Normal', level=[80, 90]))],
+        models=[LSTM(h=pre_step,
+                     input_size=96,
+                     loss=MAE(),
+                     max_steps=1000,
+                     val_check_steps=50,
+                     encoder_n_layers=2)],
         freq='5T'
     )
 
@@ -69,9 +74,9 @@ for target in ['avgcpu', 'avgmem']:
         test_df = test_dictionary.get(key)
         # 分块预测
         predictions_list = []
-        for i in range(0, len(test_df), 12):
-            test_chunk = test_df.iloc[i:i + 12]
-            if len(test_chunk) < 12:
+        for i in range(0, len(test_df), pre_step):
+            test_chunk = test_df.iloc[i:i + pre_step]
+            if len(test_chunk) < pre_step:
                 break  # 如果剩余数据不足12个，则停止
             pred_chunk = nf.predict(test_chunk)
             predictions_list.append(pred_chunk)
@@ -94,4 +99,3 @@ for target in ['avgcpu', 'avgmem']:
         plt.ylabel(f'{target}')
         plt.legend()
         plt.savefig(f"./experiment1/images/{key}-{target}.png")
-

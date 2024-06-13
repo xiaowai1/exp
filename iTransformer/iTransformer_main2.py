@@ -1,7 +1,7 @@
 # -*- coding = utf-8 -*-
-# @Time : 2024/5/26 13:24
+# @Time : 2024/5/26 13:2
 # @Author : ChiXiaoWai
-# @File : iTransformer_main.py
+# @File : STL-iTransformer_main.py
 # @Project : exp
 # 实验场景二
 import os
@@ -58,7 +58,7 @@ for target in ['avgcpu', 'avgmem']:
 
     model = iTransformer(h=12,
                          input_size=12,
-                         n_series=12,
+                         n_series=96,
                          loss=MAE(),
                          val_check_steps=1,
                          hidden_size=64,

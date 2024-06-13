@@ -236,7 +236,7 @@ def robust_statistics(x, mask, dim=-1, eps=1e-6):
     x_mad = x_mad + eps
     return x_median, x_mad
 
-# %% ../../nbs/common.scalers.ipynb 24
+# %% ../../nbs/common.scalers.ipynb 2
 def robust_scaler(x, x_median, x_mad):
     return (x - x_median) / x_mad
 

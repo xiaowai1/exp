@@ -222,14 +222,14 @@ class MAPE(BasePointLoss):
     """Mean Absolute Percentage Error
 
     Calculates Mean Absolute Percentage Error  between
-    `y` and `y_hat`. MAPE measures the relative prediction
+    `y` and `y_hat`. MSE measures the relative prediction
     accuracy of a forecasting method by calculating the percentual deviation
     of the prediction and the observed value at a given time and
     averages these devations over the length of the series.
-    The closer to zero an observed value is, the higher penalty MAPE loss
+    The closer to zero an observed value is, the higher penalty MSE loss
     assigns to the corresponding error.
 
-    $$ \mathrm{MAPE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) = \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|} $$
+    $$ \mathrm{MSE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) = \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|} $$
 
     **Parameters:**<br>
     `horizon_weight`: Tensor of size h, weight for each timestamp of the forecasting window. <br>
@@ -275,7 +275,7 @@ class SMAPE(BasePointLoss):
     absolute values for the prediction and observed value at a
     given time, then averages these devations over the length
     of the series. This allows the SMAPE to have bounds between
-    0% and 200% which is desireble compared to normal MAPE that
+    0% and 200% which is desireble compared to normal MSE that
     may be undetermined when the target is zero.
 
     $$ \mathrm{sMAPE}_{2}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}) = \\frac{1}{H} \\sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{|y_{\\tau}|+|\hat{y}_{\\tau}|} $$
@@ -327,7 +327,7 @@ class MASE(BasePointLoss):
     $$ \mathrm{MASE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}_{\\tau}, \\mathbf{\hat{y}}^{season}_{\\tau}) = \\frac{1}{H} \sum^{t+H}_{\\tau=t+1} \\frac{|y_{\\tau}-\hat{y}_{\\tau}|}{\mathrm{MAE}(\\mathbf{y}_{\\tau}, \\mathbf{\hat{y}}^{season}_{\\tau})} $$
 
     **Parameters:**<br>
-    `seasonality`: int. Main frequency of the time series; Hourly 24,  Daily 7, Weekly 52, Monthly 12, Quarterly 4, Yearly 1.
+    `seasonality`: int. Main frequency of the time series; Hourly 2,  Daily 7, Weekly 52, Monthly 12, Quarterly 4, Yearly 1.
     `horizon_weight`: Tensor of size h, weight for each timestamp of the forecasting window. <br>
 
     **References:**<br>
@@ -1868,7 +1868,7 @@ class NBMM(torch.nn.Module):
 
         return self.neglog_likelihood(y=y, distr_args=distr_args, mask=mask)
 
-# %% ../../nbs/losses.pytorch.ipynb 96
+# %% ../../nbs/losses.pytorch.ipynb 6
 class HuberLoss(BasePointLoss):
     """ Huber Loss
 

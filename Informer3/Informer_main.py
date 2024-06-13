@@ -1,7 +1,7 @@
 # -*- coding = utf-8 -*-
-# @Time : 2024/5/26 13:24
+# @Time : 2024/5/26 13:2
 # @Author : ChiXiaoWai
-# @File : iTransformer_main.py
+# @File : STL-iTransformer_main.py
 # @Project : exp
 import numpy as np
 import pandas as pd
